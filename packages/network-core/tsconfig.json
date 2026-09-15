@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../shared-types"
+    },
+    {
+      "path": "../protocol"
+    },
+    {
+      "path": "../transport-interface"
+    },
+    {
+      "path": "../backend-interface"
+    }
+  ]
+}

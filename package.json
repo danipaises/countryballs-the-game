@@ -1,0 +1,18 @@
+{
+  "name": "countryballs-games",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0 <25" },
+  "workspaces": ["packages/*", "games/*"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "verify": "npm run test && npm run check:boundaries",
+    "demo:contracts": "npm run build && node tools/contract-demo.mjs",
+    "load:contracts": "npm run build && node tools/load-contracts.mjs"
+  },
+  "devDependencies": { "typescript": "5.9.3" }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@countryballs/community-provider",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@countryballs/shared-types": "0.1.0",
+    "@countryballs/config": "0.1.0",
+    "@countryballs/backend-interface": "0.1.0",
+    "@countryballs/host-core": "0.1.0",
+    "@countryballs/matchmaking": "0.1.0"
+  }
+}

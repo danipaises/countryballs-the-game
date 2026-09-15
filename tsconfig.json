@@ -1,0 +1,38 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/shared-types"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "packages/protocol"
+    },
+    {
+      "path": "packages/backend-interface"
+    },
+    {
+      "path": "packages/transport-interface"
+    },
+    {
+      "path": "packages/game-core"
+    },
+    {
+      "path": "packages/network-core"
+    },
+    {
+      "path": "packages/host-core"
+    },
+    {
+      "path": "packages/matchmaking"
+    },
+    {
+      "path": "packages/community-provider"
+    },
+    {
+      "path": "games/arena-2d"
+    }
+  ]
+}
