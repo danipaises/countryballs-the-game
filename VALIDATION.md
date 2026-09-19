@@ -1,21 +1,28 @@
-# Validação da Fase 1
+# Validação da versão 0.2.0
 
-Validado em 15 de setembro de 2026 com Node.js 24.
+Validado em 16 de setembro de 2026 com Node.js 24.
 
-## Resultado
+## Resultado executado
 
-- `npm run verify`: aprovado.
-- 47 testes automatizados: 47 aprovados, 0 falhas.
-- Fronteiras: 11 módulos e 52 imports/exports verificados.
-- Demonstração: dois convidados entraram em uma sala privada, o host iniciou e encerrou a rodada, os jogadores voltaram ao lobby e o host continuou registrado.
-- Carga sintética: 3 hosts, 12 salas, 96 jogadores e 28.800 mensagens de input em 10 segundos virtuais; todos os jogadores foram liberados no fim.
+- `npm run typecheck`: aprovado para pacotes, Worker e frontend.
+- `npm test`: 50/50 testes aprovados.
+- `npm run build:web`: aprovado; shell inicial separado do chunk Phaser.
+- `wrangler deploy --dry-run`: aprovado; assets, Worker, bindings `DIRECTORY`/`MATCHES` e variáveis reconhecidos.
+- verificação de fronteiras dos pacotes: incluída em `npm run verify`.
 
-## O que os testes cobrem
+Os novos testes headless cobrem início somente com dois jogadores prontos, movimento decidido pelo servidor, input expirado, ataque/cooldown, dano, pontuação, respawn e encerramento seguro por saída.
 
-Protocolo, limites de bytes, UTF-8 e JSON inválidos, replay, flood, autoridade de direção, versão incompatível, capacidade, reserva do host, oito jogadores, salas simultâneas, convites, heartbeat, expiração, ticket de uso único, reconexão, ciclo de sala, seleção de host e falhas de transporte usando um fake controlado.
+## Limites da evidência
 
-## Limite da evidência
+O ambiente de desenvolvimento usado nesta validação bloqueou `uv_interface_addresses`, então o servidor local do Wrangler não pôde abrir uma porta. Isso é uma restrição do ambiente virtual, não uma falha de bundle; o teste integrado de HTTP/WebSocket deve ser feito no primeiro deploy Cloudflare.
 
-A carga é um teste dos contratos em memória. Não mede WebRTC, CGNAT, TURN, upload, latência, hardware do host, Phaser, física real, Electron ou Android. Esses itens exigem as fases correspondentes e testes entre dispositivos físicos.
+Ainda não foram validados em dispositivos físicos:
 
-O projeto também não possui aplicação web ou Worker implantável nesta fase. `CLOUDFLARE_DEPLOYMENT.md` registra a arquitetura e a ordem necessária para publicação.
+- 8 navegadores simultâneos;
+- redes móveis e troca Wi‑Fi/dados;
+- sessões longas e custo observado;
+- reconexão após queda;
+- instalação PWA em Android/Windows;
+- gamepad e navegadores além de Chromium.
+
+O MVP não possui autenticação persistente, ranking confiável ou proteção de abuso suficiente para divulgação ampla. O host Cloudflare é autoritativo para cheats básicos do cliente, mas isso não substitui rate limiting de borda, moderação e operação de produção.

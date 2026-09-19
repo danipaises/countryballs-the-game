@@ -1,18 +1,23 @@
 {
   "name": "countryballs-games",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=24.0.0 <25" },
-  "workspaces": ["packages/*", "games/*"],
+  "workspaces": ["apps/*", "packages/*", "games/*"],
   "scripts": {
-    "build": "tsc -b",
-    "typecheck": "tsc -b",
-    "test": "npm run build && node --test tests/*.test.mjs",
+    "build": "npm run build:core && npm run build:web",
+    "build:core": "tsc -b",
+    "build:web": "npm run build:core && npm run build -w @countryballs/web",
+    "typecheck": "tsc -b && npm run typecheck -w @countryballs/cloudflare && npm run typecheck -w @countryballs/web",
+    "test": "npm run build:core && node --test tests/*.test.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "verify": "npm run test && npm run check:boundaries",
-    "demo:contracts": "npm run build && node tools/contract-demo.mjs",
-    "load:contracts": "npm run build && node tools/load-contracts.mjs"
+    "demo:contracts": "npm run build:core && node tools/contract-demo.mjs",
+    "load:contracts": "npm run build:core && node tools/load-contracts.mjs",
+    "dev": "npm run build:core && npm run dev -w @countryballs/cloudflare",
+    "deploy": "npm run verify && npm run build:web && npm run deploy -w @countryballs/cloudflare",
+    "cf:check": "npm run build:web && npm run check -w @countryballs/cloudflare"
   },
   "devDependencies": { "typescript": "5.9.3" }
 }

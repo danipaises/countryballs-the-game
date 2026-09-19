@@ -11,6 +11,7 @@ const layers = {
   'game-core': ['shared-types'], 'network-core': ['shared-types', 'protocol', 'transport-interface', 'backend-interface'],
   'host-core': ['shared-types', 'config'], matchmaking: ['shared-types', 'config'],
   'community-provider': ['shared-types', 'config', 'backend-interface', 'host-core', 'matchmaking'],
+  'cloud-contracts': [],
   'arena-2d': ['shared-types', 'game-core'],
 };
 function walk(directory) {

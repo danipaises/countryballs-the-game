@@ -1,86 +1,44 @@
-# Backend e hospedagem substituíveis
+# Providers substituíveis
 
-## Princípio
+## Regra
 
-Jogos importam Game Networking API e tipos do núcleo. Nunca importam um SDK de Firebase, Supabase, Cloudflare ou outro provedor. Os três eixos são escolhidos na composição do aplicativo:
+Módulos em `games/` nunca importam Cloudflare, Firebase, Supabase, React ou uma engine. Eles expõem runtime e tipos puros. O aplicativo escolhe providers na borda.
 
-```json
-{
-  "backendProvider": "community",
-  "gameServerProvider": "community",
-  "transport": "webrtc",
-  "privacy": "direct",
-  "coordinatorUrl": "https://coordenador.example"
-}
-```
+Na aplicação web, `apps/web/src/providers.ts` define:
 
-O domínio `.example` é documentação; não é um serviço disponível. A Fase 1 não faz requisições a esse endereço. Chaves de assinatura, credenciais permanentes e tokens administrativos não pertencem a esse JSON público.
+- `PlatformBackendProvider`: listar, criar e entrar em salas;
+- `BrowserGameServerProvider`: abrir uma conexão de partida;
+- `CloudflareBackendProvider`: adaptador HTTP atual;
+- `CloudflareHostProvider`: adaptador WebSocket atual.
 
-## Composição executável da Fase 1
+O provider selecionado por `VITE_BACKEND_PROVIDER` é validado. Somente `cloudflare` está instalado no bundle atual; qualquer outro valor gera erro claro.
 
-```ts
-import {
-  CommunityBackendProvider,
-  InMemoryCommunityCoordinator,
-  createBackendProvider,
-} from '@countryballs/community-provider';
+## Adicionar outro backend
 
-const coordinator = new InMemoryCommunityCoordinator();
-const backend = createBackendProvider('community', {
-  community: () => new CommunityBackendProvider(coordinator),
-});
-await backend.login('Brasil');
-```
+1. crie um pacote/adaptador isolado;
+2. implemente a interface interna sem expor SDK ao jogo;
+3. valide respostas externas em runtime;
+4. converta erros para erros de domínio compreensíveis;
+5. preserve IDs opacos, expiração, autorização, compatibilidade e atomicidade;
+6. registre a implementação no ponto de composição;
+7. execute a suíte de contratos contra ela.
 
-`tools/contract-demo.mjs` executa a composição completa. O coordinator é uma implementação **local de referência** do CommunityGateway. O mesmo CommunityBackendProvider poderá receber `HttpCommunityGateway` na Fase 3. Jogos não perceberão essa mudança.
+Trocar a configuração não cria infraestrutura automaticamente. O provider precisa existir e demonstrar suas capacidades.
 
-Para partidas, `CommunityHostProvider` recebe BackendProvider, TransportFactory e MessageCodec. `joinMatch` reserva entrada, abre transporte e envia HELLO; `MatchConnection.isReady` só é true após WELCOME do host. Falha de abertura devolve a vaga. Os testes usam um fake de transporte, não um serviço WebRTC.
+## Hospedagem de partida
 
-## Criar um novo backend
+O `CloudflareHostProvider` atual entrega um `MatchClient` com `sendInput`, `command`, `subscribe` e `close`. Uma futura implementação comunitária pode entregar o mesmo comportamento sobre WebRTC; um host dedicado pode usar WebSocket. A cena Phaser não precisa saber onde a simulação roda.
 
-1. Criar pacote isolado, por exemplo `packages/cloudflare-backend`.
-2. Implementar BackendProvider diretamente ou CommunityGateway quando a semântica for a mesma.
-3. Mapear erros do fornecedor para DomainError sem expor detalhes internos ao jogo.
-4. Validar todas as respostas externas em runtime; tipos TypeScript não validam uma resposta HTTP.
-5. Preservar TTL, idempotência, autorização e reserva atômica. Rodar a mesma suíte de contratos contra o novo adaptador e acrescentar testes reais de concorrência.
-6. Declarar capacidades ausentes como UNSUPPORTED_FEATURE. Não fabricar dados de ranking ou sucesso de persistência.
-7. Registrar a fábrica na raiz de composição e alterar configuração. A fábrica existente rejeita providers não registrados.
+O monorepo também conserva as interfaces mais amplas `BackendProvider`, `GameServerProvider` e `Transport` da arquitetura comunitária. Elas cobrem registro/heartbeat de hosts e continuam válidas para reativar esse modo. Os DTOs menores de `cloud-contracts` evitam fingir hosts comunitários no deploy Cloudflare.
 
-```ts
-// Exemplo FUTURO: CloudflareBackendProvider ainda não existe.
-const factories = {
-  community: () => new CommunityBackendProvider(httpGateway),
-  cloudflare: () => new CloudflareBackendProvider(cloudflareGateway),
-};
-const backend = createBackendProvider(config.backendProvider, factories);
-```
+## Cloudflare → outro fornecedor
 
-A mudança envolve implementar/configurar o adaptador; editar apenas uma string não cria infraestrutura nem migra dados automaticamente. Projetar exportação/importação de IDs, perfis e sessões ao adicionar persistência. Sessões temporárias em memória não sobrevivem a reinícios nesta fase.
+A migração típica envolve:
 
-## Criar um novo provedor de partidas
+- implementar os dois providers novos;
+- criar a infraestrutura de diretório e runtime;
+- migrar somente os dados que realmente existirem (futuramente contas/estatísticas);
+- selecionar o provider na composição;
+- manter protocolo e `GameRuntime` quando o novo host os suportar.
 
-Implementar GameServerProvider e construir MatchConnection com a mesma semântica. `createMatch` aloca uma instância autoritativa. `joinMatch` autentica, negocia protocolo e só aceita comandos do jogador correspondente.
-
-Um DedicatedHostProvider pode usar o mesmo transporte e runtime com instâncias gerenciadas. Um CloudflareHostProvider só será válido se o serviço escolhido executar a simulação no orçamento necessário; caso contrário, Cloudflare pode continuar sendo apenas o coordenador. Um banco de dados por si só não implementa GameServerProvider.
-
-É permitido trocar o transporte para WebSocket numa infraestrutura que não suporte RTC, aceitando a semântica de rede diferente. O jogo continua usando sendInput/sendReliableEvent e snapshots. Documentar atraso, bloqueio entre mensagens, reconexão e limites de capacidade desse provider.
-
-## Comunidade versus oficial
-
-`PublicHost.trust` distingue community-casual de official-verified. A referência sempre atribui community-casual e não aceita que o host se autoproclame oficial. A implementação oficial futura exige credenciais de provisionamento e pipeline de resultados próprio.
-
-Assinar o binário do host ajuda distribuição, não prova que uma partida de terceiros foi executada honestamente. Não misturar estatísticas comunitárias com ranking competitivo global.
-
-## Contratos que uma troca deve preservar
-
-- Diretório só expõe DTO público; sala privada não aparece em listagem.
-- Ticket temporário, uso único, escopo host/sala/jogador.
-- Heartbeat usa tempo de recebimento e expira automaticamente.
-- Criação de sala e admissão verificam capacidade atomicamente.
-- Retry de createRoom com requestId igual não cria outra sala.
-- Reconexão retém identidade e rotaciona token; expiração libera slot.
-- Erros de versão são compreensíveis ao usuário.
-- Compatibilidade depende do jogo e protocolo, não só da plataforma.
-- A física permanece no runtime de partida.
-
-A classe em memória não deve ser exposta diretamente como RPC público. Faltam validação de request completo, autenticação de borda, limites por origem, armazenamento seguro e políticas operacionais, descritas em SECURITY.md.
+Supabase/Firebase podem implementar identidade/diretório, mas não viram um servidor de física apenas por armazenarem dados. O provider de partida precisa executar o loop autoritativo em um runtime apropriado.

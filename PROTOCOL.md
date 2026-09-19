@@ -1,6 +1,8 @@
 # Protocolo inicial
 
-Platform 0.1.0 · Server 0.1.0 · Protocol 1 · arena-2d 0.1.0.
+Platform 0.2.0 · Community Server 0.1.0 · Protocol 1 · arena-2d 0.1.0.
+
+No adaptador Cloudflare, o ticket é consumido no upgrade WebSocket e o servidor envia WELCOME. Os canais abaixo são lógicos: ambos usam o mesmo socket confiável. A simulação já emite eventos; ACK individual e reconciliação ainda não estão implementados.
 
 ## Formato implementado
 

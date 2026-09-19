@@ -1,0 +1,23 @@
+{
+  "name": "@countryballs/cloudflare",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config ../../wrangler.jsonc",
+    "deploy": "wrangler deploy --config ../../wrangler.jsonc",
+    "check": "wrangler deploy --dry-run --config ../../wrangler.jsonc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@countryballs/arena-2d": "0.1.0",
+    "@countryballs/cloud-contracts": "0.1.0",
+    "@countryballs/config": "0.1.0",
+    "@countryballs/protocol": "0.1.0",
+    "@countryballs/shared-types": "0.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260915.1",
+    "wrangler": "4.132.0"
+  }
+}

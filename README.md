@@ -1,60 +1,87 @@
-# CountryBalls Games — Fase 1
+# CountryBalls Games
 
-Base modular para uma plataforma de jogos CountryBalls multiplayer com servidores comunitários autoritativos.
+Plataforma web/PWA modular de jogos multiplayer. A primeira experiência jogável é **CountryBalls Arena 2D**, com 2–8 jogadores, salas públicas e privadas e simulação autoritativa.
 
-**Versão 0.1.0 · protocolo 1 · Arena 0.1.0 · entrega: arquitetura e núcleo de contratos.**
+**Plataforma 0.2.0 · Arena 0.1.0 · protocolo 1**
 
-## O que funciona nesta entrega
+## Estado atual
 
-- Monorepo npm Workspaces, TypeScript estrito, build com referências entre projetos.
-- Interfaces de backend, hospedagem de partidas, transporte, signaling e módulos de jogo.
-- Provider comunitário conectado a um coordenador de referência **em memória**.
-- Registro e expiração de hosts, heartbeat, sessões de convidados, salas, reservas, convites, admissão e reconexão nos contratos.
-- Codec JSON com limites, validação em runtime, separação de canais, proteção contra replay e flood por participante.
-- Políticas puras de capacidade e seleção de hosts; manifesto, regras e validação de input da Arena.
-- Testes automatizados, demonstração de contratos e simulador de carga sintética.
+Esta versão é um MVP full-stack pronto para implantação na Cloudflare:
 
-**Ainda não existe site jogável, servidor de rede, WebRTC operacional, executável Windows, APK, física da Arena ou implantação pública.** Os módulos em memória servem para verificar as invariantes que as próximas fases deverão preservar. Não são um backend público seguro nem fingem conectar dispositivos.
+- React + Vite para o site/PWA responsivo;
+- Phaser carregado sob demanda para renderizar a Arena;
+- um Worker serve o site e a API;
+- `RoomDirectory` Durable Object mantém o diretório de salas;
+- um `ArenaMatch` Durable Object isolado executa cada partida;
+- WebSocket envia inputs, snapshots e eventos;
+- servidor calcula movimento, colisões, HP, ataque, cooldown, respawn, placar, cronômetro e vitória;
+- salas públicas, salas privadas por código, lobby, pronto e revanche;
+- controles WASD/setas/espaço e controles touch;
+- 50 testes automatizados e verificação de build/deploy.
 
-## Executar no Windows, Linux ou macOS
+Amigos, contas persistentes, ranking global, matchmaking automático, reconexão da sessão Cloudflare e o Kart 3D continuam como etapas posteriores. O código comunitário da Fase 1 permanece no monorepo como outro provider possível; ele não participa do deploy Cloudflare atual.
 
-Instale Node.js 24 e extraia o projeto. No terminal, dentro desta pasta:
+## Executar
+
+Requisito: Node.js 24. Não usa Docker, WSL nem máquina virtual.
 
 ```sh
 npm ci
 npm run verify
-npm run demo:contracts
-npm run load:contracts -- 3 4 10
+npm run build:web
+npm run dev
 ```
 
-Não é necessário Docker, WSL ou virtualização. Os comandos são os mesmos no PowerShell. Node.js é uma dependência de desenvolvimento desta fase; o aplicativo Windows futuro deverá empacotar o runtime para o usuário final.
-
-O último comando cria 3 hosts lógicos, 4 salas por host e 8 bots por sala, processando 10 segundos de inputs virtuais. **Não mede WebRTC, upload, latência real ou capacidade de hospedagem.** Não use o resultado para anunciar vagas.
+Abra o endereço exibido pelo Wrangler. Em alguns ambientes virtuais restritos, `wrangler dev` pode não conseguir enumerar interfaces de rede; a verificação de bundle continua disponível com `npm run cf:check`.
 
 | Comando | Resultado |
 |---|---|
-| `npm run build` | Compila os 11 módulos e gera declarações de tipos |
-| `npm run verify` | Executa testes e verifica fronteiras de dependências |
-| `npm run demo:contracts` | Dois convidados, sala privada, admissão, início, fim e retorno ao lobby |
-| `npm run load:contracts -- 3 4 10` | Carga sintética sobre codec, validação e contratos |
+| `npm run typecheck` | Verifica núcleo, Worker e frontend com TypeScript estrito |
+| `npm run verify` | Compila, executa 50 testes e valida fronteiras entre módulos |
+| `npm run build:web` | Gera a PWA em `apps/web/dist` |
+| `npm run cf:check` | Faz a build web e um deploy Cloudflare em modo `--dry-run` |
+| `npm run deploy` | Verifica tudo, compila e publica com Wrangler |
 
-`package-lock.json` fixa a instalação. Não há dependências externas em runtime nesta fase. O TypeScript é uma dependência de desenvolvimento.
+## Organização
+
+```text
+apps/
+  web/                 React, PWA, Phaser e providers do navegador
+  cloudflare/          Worker, API e Durable Objects
+packages/
+  cloud-contracts/     DTOs da implantação Cloudflare
+  game-core/           contratos independentes de engine/provider
+  protocol/            envelopes, codec, quotas e validação
+  backend-interface/   interface de backend
+  transport-interface/ interface de transporte
+  network-core/        API interna de partida
+  community-provider/  provider comunitário preservado para evolução
+games/
+  arena-2d/            regras e simulação autoritativa headless
+tests/                 contratos, segurança e regras da Arena
+```
+
+O módulo `games/arena-2d` não importa React, Phaser, Cloudflare, Firebase ou Supabase. O frontend seleciona `CloudflareBackendProvider` e `CloudflareHostProvider` em um único ponto de composição. A troca futura exige um novo adaptador, não mudanças nas regras do jogo.
+
+## Implantar
+
+O caminho mais simples é conectar este repositório ao **Workers Builds** da Cloudflare. Use:
+
+- branch de produção: `main`;
+- diretório raiz: `/`;
+- comando de build: `npm run build:web`;
+- comando de deploy: `npx wrangler deploy`.
+
+O arquivo `wrangler.jsonc` já declara assets, bindings e migração SQLite dos Durable Objects. Veja [CLOUDFLARE_DEPLOYMENT.md](CLOUDFLARE_DEPLOYMENT.md) para o passo a passo e os limites de custo.
 
 ## Documentação
 
-- [ARCHITECTURE.md](ARCHITECTURE.md): decisões, estrutura, interfaces, riscos e escopo.
-- [NETWORKING.md](NETWORKING.md): ICE, signaling, LAN, reconexão e privacidade.
-- [COMMUNITY_SERVER.md](COMMUNITY_SERVER.md): Windows, benchmark, reservas e operação.
-- [ADDING_A_GAME.md](ADDING_A_GAME.md): contrato de um módulo de jogo.
-- [BACKEND_PROVIDERS.md](BACKEND_PROVIDERS.md): substituição de infraestrutura sem alterar jogos.
-- [PROTOCOL.md](PROTOCOL.md): mensagens e limites efetivamente implementados.
-- [ROADMAP.md](ROADMAP.md): fases, dependências e critérios de aceitação.
-- [SECURITY.md](SECURITY.md): fronteiras de confiança e requisitos antes da internet pública.
-- [VALIDATION.md](VALIDATION.md): resultados executados e testes pendentes.
-- [CLOUDFLARE_DEPLOYMENT.md](CLOUDFLARE_DEPLOYMENT.md): divisão Pages/Worker, domínios, secrets e ordem de publicação.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — decisões e fronteiras.
+- [CLOUDFLARE_DEPLOYMENT.md](CLOUDFLARE_DEPLOYMENT.md) — publicação pelo painel/GitHub.
+- [PROTOCOL.md](PROTOCOL.md) — mensagens da partida.
+- [BACKEND_PROVIDERS.md](BACKEND_PROVIDERS.md) — troca de provider.
+- [ADDING_A_GAME.md](ADDING_A_GAME.md) — adicionar outro jogo.
+- [ROADMAP.md](ROADMAP.md) — concluído e próximos marcos.
+- [VALIDATION.md](VALIDATION.md) — evidências e limites dos testes.
 
-## Continuação com agentes de IA
-
-Leia `AGENTS.md`, arquitetura e roadmap antes de editar. O próximo trabalho é a **Fase 2: runtime mínimo do CountryBalls Server**, mantendo os contratos aprovados por testes. Não declare WebRTC, benchmark automático ou multiplayer concluídos usando a demonstração em memória como evidência.
-
-Nenhum código, mapa ou asset de franquias comerciais é incluído. A Arena terá círculos e elementos visuais próprios. Nenhuma licença de redistribuição foi escolhida em nome do proprietário; definir isso antes de uma publicação de código aberto.
+Os visuais atuais são geométricos e provisórios, produzidos pelo próprio código. Nenhum personagem, mapa ou asset de franquias comerciais foi copiado.

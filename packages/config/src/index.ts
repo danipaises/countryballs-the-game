@@ -1,6 +1,6 @@
 import { assertCondition, validInteger } from '@countryballs/shared-types';
 
-export const versions = Object.freeze({ platform: '0.1.0', server: '0.1.0', protocol: 1 });
+export const versions = Object.freeze({ platform: '0.2.0', server: '0.1.0', protocol: 1 });
 export const defaults = Object.freeze({
   maxPlayersPerMatch: 8,
   minPublicMatches: 3,
@@ -26,6 +26,11 @@ export const defaults = Object.freeze({
   maxCoordinatorRequestsPerMinute: 120,
   maxHosts: 1_000,
   maxGuests: 10_000,
+  cloudRoomTtlMs: 3_600_000,
+  cloudJoinTicketTtlMs: 20_000,
+  cloudMaxRooms: 200,
+  cloudCreatePerMinute: 10,
+  cloudJoinPerMinute: 60,
   protocolVersion: 1,
 });
 export type PlatformConfig = { [K in keyof typeof defaults]: number };

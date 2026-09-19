@@ -1,0 +1,10 @@
+{
+  "name": "CountryBalls Games",
+  "short_name": "CB Games",
+  "description": "Jogos CountryBalls multiplayer direto no navegador.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08162f",
+  "theme_color": "#08162f",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

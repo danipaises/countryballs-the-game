@@ -32,6 +32,9 @@
       "path": "packages/community-provider"
     },
     {
+      "path": "packages/cloud-contracts"
+    },
+    {
       "path": "games/arena-2d"
     }
   ]
