@@ -49,3 +49,16 @@ test('Arena encerra com segurança quando resta menos de dois jogadores', () => 
   assert.equal(arena.snapshot().phase, 'ended');
   assert.equal(arena.snapshot().winnerId, 'a');
 });
+
+test('revanche percorre as arenas na ordem Orbital, Rua e Ilha', () => {
+  const arena = runtime();
+  arena.addPlayer('a', 'Brasil'); arena.addPlayer('b', 'Japão');
+  assert.equal(arena.snapshot().arenaId, 'orbital-station');
+  arena.acceptCommand('a', 1, 'ready'); arena.acceptCommand('b', 1, 'ready');
+  arena.removePlayer('b'); arena.addPlayer('b', 'Japão');
+  arena.acceptCommand('a', 2, 'rematch'); arena.acceptCommand('b', 2, 'rematch');
+  assert.equal(arena.snapshot().arenaId, 'street-court');
+  arena.removePlayer('b'); arena.addPlayer('b', 'Japão');
+  arena.acceptCommand('a', 3, 'rematch'); arena.acceptCommand('b', 3, 'rematch');
+  assert.equal(arena.snapshot().arenaId, 'tropical-island');
+});

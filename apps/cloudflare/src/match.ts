@@ -145,7 +145,7 @@ export class ArenaMatch extends DurableObject<Env> {
 
   private send(connection: Connection, message: WireMessage): void {
     if (connection.socket.readyState !== WebSocket.OPEN) return;
-    try { connection.socket.send(this.codec.encode(message)); }
+    try { connection.socket.send(new TextDecoder().decode(this.codec.encode(message))); }
     catch { connection.socket.close(1011, 'Send failed'); }
   }
 

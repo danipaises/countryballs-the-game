@@ -1,4 +1,4 @@
-import type { ArenaSnapshot } from '@countryballs/arena-2d';
+import type { ArenaEvent, ArenaSnapshot } from '@countryballs/arena-2d';
 import type { CloudAdmission, CloudRosterEntry } from '@countryballs/cloud-contracts';
 import { JsonCodec } from '@countryballs/protocol';
 import type { WireMessage } from '@countryballs/protocol';
@@ -7,6 +7,7 @@ export type MatchListener = (event: MatchClientEvent) => void;
 export type MatchClientEvent =
   | { type: 'state'; snapshot: ArenaSnapshot }
   | { type: 'roster'; roster: CloudRosterEntry[] }
+  | { type: 'game-event'; event: ArenaEvent }
   | { type: 'connected' }
   | { type: 'closed'; message: string }
   | { type: 'error'; message: string };
@@ -44,9 +45,10 @@ export class MatchClient {
       const message = this.codec.decode(bytes);
       if (message.type === 'STATE_SNAPSHOT') this.emit({ type: 'state', snapshot: message.payload as unknown as ArenaSnapshot });
       if (message.type === 'SERVER_EVENT' && message.name === 'ROSTER') this.emit({ type: 'roster', roster: message.payload as unknown as CloudRosterEntry[] });
+      else if (message.type === 'SERVER_EVENT') this.emit({ type: 'game-event', event: message.payload as unknown as ArenaEvent });
       if (message.type === 'ERROR') this.emit({ type: 'error', message: message.message });
     } catch { this.emit({ type: 'error', message: 'O servidor enviou uma mensagem inválida.' }); }
   }
-  private send(message: WireMessage): void { if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(this.codec.encode(message)); }
+  private send(message: WireMessage): void { if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(new TextDecoder().decode(this.codec.encode(message))); }
   private emit(event: MatchClientEvent): void { for (const listener of this.listeners) listener(event); }
 }

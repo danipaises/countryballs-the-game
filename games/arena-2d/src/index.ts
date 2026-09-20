@@ -5,11 +5,17 @@ import type { PlayerId } from '@countryballs/shared-types';
 export const arenaManifest = Object.freeze({
   id: 'arena-2d', version: '0.1.0', name: 'CountryBalls Arena', icon: 'countryball-arena',
   dimension: '2d', renderer: 'phaser', protocolVersion: 1, minPlayers: 2, maxPlayers: 8,
-  maps: [{ id: 'first-ring', name: 'Primeira arena', version: '0.1.0' }], status: 'playable',
+  maps: [
+    { id: 'orbital-station', name: 'Estação Orbital', version: '0.2.0' },
+    { id: 'tropical-island', name: 'Ilha Tropical', version: '0.2.0' },
+    { id: 'street-court', name: 'Quadra de Rua', version: '0.2.0' },
+  ], status: 'playable',
 } satisfies GameManifest);
+export const arenaSequence = ['orbital-station', 'street-court', 'tropical-island'] as const;
+export type ArenaMapId = typeof arenaSequence[number];
 export const arenaRules = Object.freeze({
-  width: 960, height: 640, playerRadius: 18, moveSpeed: 180,
-  maxHp: 100, attackDamage: 25, attackRange: 60, attackCooldownMs: 500,
+  width: 720, height: 1080, playerRadius: 42, moveSpeed: 250,
+  maxHp: 100, attackDamage: 25, attackRange: 132, attackCooldownMs: 500,
   respawnMs: 3_000, roundDurationMs: 180_000, inputTimeoutMs: 250,
 });
 export type ArenaInput = { move: [number, number] };
@@ -46,6 +52,7 @@ export type ArenaEvent = {
 export type ArenaSnapshotPlayer = [string, number, number, number, number, number, number, string];
 export type ArenaSnapshot = {
   phase: ArenaPhase;
+  arenaId: ArenaMapId;
   tick: number;
   remainingTicks: number;
   winnerId: string | null;
@@ -77,6 +84,7 @@ export class ArenaSimulation implements GameRuntime<ArenaInput, ArenaSnapshot, A
   private disposed = false;
   private eventId = 0;
   private winnerId: string | null = null;
+  private arenaIndex = 0;
 
   constructor(private readonly context: RuntimeContext) {}
 
@@ -114,7 +122,7 @@ export class ArenaSimulation implements GameRuntime<ArenaInput, ArenaSnapshot, A
     }
     if (command === 'rematch' && this.phase === 'ended') {
       player.ready = true;
-      if (this.players.size >= arenaManifest.minPlayers && [...this.players.values()].every(candidate => candidate.ready)) { this.resetLobby(); this.startRound(); }
+      if (this.players.size >= arenaManifest.minPlayers && [...this.players.values()].every(candidate => candidate.ready)) { this.arenaIndex = (this.arenaIndex + 1) % arenaSequence.length; this.resetLobby(); this.startRound(); }
       return;
     }
     if (command === 'attack' && this.phase === 'running') this.attack(player);
@@ -143,6 +151,7 @@ export class ArenaSimulation implements GameRuntime<ArenaInput, ArenaSnapshot, A
   snapshot(): ArenaSnapshot {
     return {
       phase: this.phase, tick: this.currentTick,
+      arenaId: arenaSequence[this.arenaIndex]!,
       remainingTicks: this.phase === 'running' ? Math.max(0, this.roundEndsAt - this.currentTick) : 0,
       winnerId: this.winnerId,
       players: [...this.players.values()].sort((a, b) => a.slot - b.slot).map(player => [
@@ -219,7 +228,7 @@ export class ArenaSimulation implements GameRuntime<ArenaInput, ArenaSnapshot, A
 
   private spawnFor(slot: number): { x: number; y: number } {
     const angle = slot / arenaManifest.maxPlayers * Math.PI * 2;
-    return { x: arenaRules.width / 2 + Math.cos(angle) * 220, y: arenaRules.height / 2 + Math.sin(angle) * 150 };
+    return { x: arenaRules.width / 2 + Math.cos(angle) * 180, y: arenaRules.height / 2 + Math.sin(angle) * 130 };
   }
   private player(id: string): PlayerInternal { const value = this.players.get(id); assertCondition(value, 'UNAUTHORIZED', 'Jogador não pertence à partida.'); return value; }
   private clamp(value: number, min: number, max: number): number { return Math.max(min, Math.min(max, value)); }
