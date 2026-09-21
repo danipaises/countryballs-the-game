@@ -4,7 +4,10 @@ import type { ArenaEvent, ArenaMapId, ArenaSnapshot } from '@countryballs/arena-
 import type { CloudRosterEntry, CountryCode } from '@countryballs/cloud-contracts';
 
 type Controls = { onMove(move: [number, number]): void; onAttack(): void };
-const frames: Record<CountryCode, number> = { BR: 0, PT: 1, AR: 2, US: 3, JP: 4, DE: 5, FR: 6, IT: 7 };
+const countryTextures: Record<CountryCode, string> = {
+  BR: 'ball-br', PT: 'ball-pt', AR: 'ball-ar', US: 'ball-us',
+  JP: 'ball-jp', DE: 'ball-de', FR: 'ball-fr', IT: 'ball-it',
+};
 const backgrounds: Record<ArenaMapId, string> = { 'orbital-station': 'arena-orbital', 'tropical-island': 'arena-island', 'street-court': 'arena-street' };
 
 export class ArenaScene extends Phaser.Scene {
@@ -23,7 +26,9 @@ export class ArenaScene extends Phaser.Scene {
     this.load.image('arena-orbital', '/arenas/orbital.webp');
     this.load.image('arena-island', '/arenas/island.webp');
     this.load.image('arena-street', '/arenas/street.webp');
-    this.load.spritesheet('countryballs', '/arenas/countryballs.png', { frameWidth: 384, frameHeight: 384 });
+    for (const [country, texture] of Object.entries(countryTextures) as [CountryCode, string][]) {
+      this.load.image(texture, `/arenas/ball-${country.toLowerCase()}.png`);
+    }
   }
   create(): void {
     for (const [id, key] of Object.entries(backgrounds) as [ArenaMapId, string][]) {
@@ -62,7 +67,7 @@ export class ArenaScene extends Phaser.Scene {
   }
   setRoster(roster: CloudRosterEntry[]): void {
     this.roster = new Map(roster.map(player => [player.playerId, player]));
-    for (const [id, item] of this.balls) { const player = this.roster.get(id); if (!player) continue; (item.getByName('body') as Phaser.GameObjects.Image).setFrame(frames[player.country]); (item.getByName('name') as Phaser.GameObjects.Text).setText(player.name); }
+    for (const [id, item] of this.balls) { const player = this.roster.get(id); if (!player) continue; (item.getByName('body') as Phaser.GameObjects.Image).setTexture(countryTextures[player.country]); (item.getByName('name') as Phaser.GameObjects.Text).setText(player.name); }
   }
   handleEvent(event: ArenaEvent): void {
     if (event.type !== 'PLAYER_DAMAGED' || !event.targetId) return;
@@ -74,7 +79,7 @@ export class ArenaScene extends Phaser.Scene {
     const player = this.roster.get(id); const container = this.add.container(0, 0).setDepth(5); const local = id === this.localPlayerId;
     const ring = this.add.circle(0, 6, 54).setStrokeStyle(local ? 6 : 3, local ? 0x4de5ff : 0xffffff, local ? 0.95 : 0.22);
     const shadow = this.add.ellipse(0, 38, 88, 28, 0x000000, 0.32);
-    const body = this.add.image(0, 0, 'countryballs', frames[player?.country ?? 'BR']).setDisplaySize(108, 108).setName('body');
+    const body = this.add.image(0, 0, countryTextures[player?.country ?? 'BR']).setDisplaySize(108, 108).setName('body');
     const name = this.add.text(0, -67, player?.name ?? fallbackName, { fontFamily: 'Arial Black, system-ui', fontSize: '18px', color: '#ffffff', stroke: '#06101f', strokeThickness: 6 }).setOrigin(0.5).setName('name');
     const hpBack = this.add.rectangle(0, 65, 82, 10, 0x07111e, 0.9).setStrokeStyle(2, 0xffffff, 0.5);
     const hp = this.add.rectangle(0, 65, 78, 8, 0x4df098).setName('hp');

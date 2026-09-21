@@ -1,5 +1,6 @@
-const CACHE = 'countryballs-shell-v2';
-const SHELL = ['/', '/manifest.webmanifest', '/icon.svg', '/arenas/orbital.webp', '/arenas/island.webp', '/arenas/street.webp', '/arenas/countryballs.png'];
+const CACHE = 'countryballs-shell-v3';
+const BALLS = ['br', 'pt', 'ar', 'us', 'jp', 'de', 'fr', 'it'].map(country => `/arenas/ball-${country}.png`);
+const SHELL = ['/', '/manifest.webmanifest', '/icon.svg', '/arenas/orbital.webp', '/arenas/island.webp', '/arenas/street.webp', ...BALLS];
 self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))); });
 self.addEventListener('activate', event => event.waitUntil(Promise.all([caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))), self.clients.claim()])));
 self.addEventListener('fetch', event => {
